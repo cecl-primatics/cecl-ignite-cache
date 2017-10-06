@@ -20,30 +20,28 @@
 	<bean class="org.apache.ignite.configuration.IgniteConfiguration">
 		<!-- Enabling the peer-class loading feature. -->
 		<property name="peerClassLoadingEnabled" value="true" />
-		
-		<property name="memoryConfiguration">
-            <bean class="org.apache.ignite.configuration.MemoryConfiguration">
-                <!-- Setting a name of the default memory policy. Required to set only if the default policy's
-                    parameters are overridden like it's done below. -->
-                <property name="defaultMemoryPolicyName" value="Default_Region"/>
 
-                <!-- Defining several memory policies for different memory regions -->
-                <property name="memoryPolicies">
-                    <list>
-                        <!--
-                            Default memory region that grows endlessly. A cache is bound to this memory region
-                            unless it sets another one in its CacheConfiguration.
-                        -->
-                        <bean class="org.apache.ignite.configuration.MemoryPolicyConfiguration">
-                            <property name="name" value="Default_Region"/>
-                            <!-- 1000 MB memory region with disabled eviction -->
-                            <property name="initialSize" value="#{512L * 1024 * 1024}"/>
-							<property name="maxSize" value="#{1L * 1024 * 1024 * 1024}"/>
-                        </bean>
-                    </list>
-                </property>
-            </bean>
-</property>
+		<property name="memoryConfiguration">
+			<bean class="org.apache.ignite.configuration.MemoryConfiguration">
+				<!-- Setting a name of the default memory policy. Required to set only 
+					if the default policy's parameters are overridden like it's done below. -->
+				<property name="defaultMemoryPolicyName" value="Default_Region" />
+
+				<!-- Defining several memory policies for different memory regions -->
+				<property name="memoryPolicies">
+					<list>
+						<!-- Default memory region that grows endlessly. A cache is bound to 
+							this memory region unless it sets another one in its CacheConfiguration. -->
+						<bean class="org.apache.ignite.configuration.MemoryPolicyConfiguration">
+							<property name="name" value="Default_Region" />
+							<!-- 1000 MB memory region with disabled eviction -->
+							<property name="initialSize" value="#{512L * 1024 * 1024}" />
+							<property name="maxSize" value="#{1L * 1024 * 1024 * 1024}" />
+						</bean>
+					</list>
+				</property>
+			</bean>
+		</property>
 
 		<property name="discoverySpi">
 			<bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
@@ -53,7 +51,10 @@
 						<property name="addresses">
 							<list>
 								<!-- In distributed environment, replace with actual host IP address. -->
-								<value>127.0.0.1:47500..47509</value>
+								<value>13.58.228.121</value>
+								<value>18.221.246.121</value>
+								<value>18.220.240.111</value>
+								<value>127.0.0.1</value>
 							</list>
 						</property>
 					</bean>
@@ -61,21 +62,21 @@
 			</bean>
 		</property>
 		<property name="cacheConfiguration">
-		<list>
-			    	<!-- Creating a cache configuration. -->
-      <bean class="org.apache.ignite.configuration.CacheConfiguration">
-      	<property name="name" value="LoanCache"/>
-		<property name="cacheMode" value="PARTITIONED"/>
-		<!-- Set number of backups to 0-->
-        <property name="backups" value="0"/>		
-		<property name="onheapCacheEnabled" value="false"/>
-		<property name="copyOnRead" value="false"/>
-		<!--<property name="storeKeepBinary" value="false"/> -->
-		
-        <!-- Creating the affinity function with custom setting. -->
+			<list>
+				<!-- Creating a cache configuration. -->
+				<bean class="org.apache.ignite.configuration.CacheConfiguration">
+					<property name="name" value="LoanCache" />
+					<property name="cacheMode" value="PARTITIONED" />
+					<!-- Set number of backups to 0 -->
+					<property name="backups" value="0" />
+					<property name="onheapCacheEnabled" value="false" />
+					<property name="copyOnRead" value="false" />
+					<!--<property name="storeKeepBinary" value="false"/> -->
 
-      </bean>
-	  </list>
-	  </property>
-	  </bean>
+					<!-- Creating the affinity function with custom setting. -->
+
+				</bean>
+			</list>
+		</property>
+	</bean>
 </beans>
