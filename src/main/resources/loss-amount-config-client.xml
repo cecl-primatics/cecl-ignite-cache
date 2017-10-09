@@ -68,6 +68,8 @@
       	<property name="name" value="loanCache"/>
 		<property name="cacheMode" value="LOCAL"/>
 		<property name="atomicityMode" value="ATOMIC"/>
+		<property name="publicThreadPoolSize" value="64"/>
+        <property name="systemThreadPoolSize" value="64"/>
 		<!-- Set number of backups to 0-->
         <property name="backups" value="0"/>
 		<property name="onheapCacheEnabled" value="false"/>
