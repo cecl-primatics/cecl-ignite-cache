@@ -39,7 +39,7 @@
                             <property name="name" value="Default_Region"/>
                             <!-- 1000 MB memory region with disabled eviction -->
                             <property name="initialSize" value="#{512L * 1024 * 1024}"/>
-							<property name="maxSize" value="#{1L * 1024 * 1024 * 1024}"/>
+							<property name="maxSize" value="#{5L * 1024 * 1024 * 1024}"/>
                         </bean>
                     </list>
                 </property>
