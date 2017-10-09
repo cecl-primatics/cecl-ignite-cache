@@ -19,7 +19,7 @@
 	<!-- Alter configuration below as needed. -->
 	<bean class="org.apache.ignite.configuration.IgniteConfiguration">
 		<!-- Enabling the peer-class loading feature. -->
-		<property name="peerClassLoadingEnabled" value="true" />
+		<property name="peerClassLoadingEnabled" value="false" />
 		<property name="clientMode" value="true"/>
 		
 		<property name="memoryConfiguration">
