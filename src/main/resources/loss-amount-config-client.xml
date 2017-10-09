@@ -21,7 +21,8 @@
 		<!-- Enabling the peer-class loading feature. -->
 		<property name="peerClassLoadingEnabled" value="true" />
 		<property name="clientMode" value="true"/>
-		
+		<property name="publicThreadPoolSize" value="100"/>
+        <property name="systemThreadPoolSize" value="100"/>
 		<property name="memoryConfiguration">
             <bean class="org.apache.ignite.configuration.MemoryConfiguration">
                 <!-- Setting a name of the default memory policy. Required to set only if the default policy's
@@ -68,8 +69,6 @@
       	<property name="name" value="loanCache"/>
 		<property name="cacheMode" value="LOCAL"/>
 		<property name="atomicityMode" value="ATOMIC"/>
-		<property name="publicThreadPoolSize" value="64"/>
-        <property name="systemThreadPoolSize" value="64"/>
 		<!-- Set number of backups to 0-->
         <property name="backups" value="0"/>
 		<property name="onheapCacheEnabled" value="false"/>
