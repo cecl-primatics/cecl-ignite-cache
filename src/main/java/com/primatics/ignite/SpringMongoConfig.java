@@ -34,7 +34,7 @@ public class SpringMongoConfig extends AbstractMongoConfiguration{
 	@Override
 	@Bean
 	public Mongo mongo() throws Exception {
-		return new MongoClient("18.221.238.212");
+		return new MongoClient("18.221.202.202");
 	}
 
 }
