@@ -1,5 +1,6 @@
 package com.primatics.ignite.repository;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -15,6 +16,10 @@ public class LoanRepositoryImpl implements LoanRepositoryCustom {
 	
 	public Set<Integer> getKeys() {
 				
-		return (Set<Integer>) mongoTemplate.getCollection("loans").distinct("key");
+		List<Integer> keylist = mongoTemplate.getCollection("loans").distinct("key");
+		
+		Set set = new HashSet(keylist);
+		
+		return set;
 	}
 }
