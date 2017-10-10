@@ -63,19 +63,12 @@ public class LoanIgnite implements Serializable {
 		
 		Stopwatch watch = Stopwatch.createStarted();
 		final List<Loan> loans = loanRepository.findAll();
-		
-		final Map<Integer, Loan> mapLoans = new HashMap<Integer, Loan>(loans.size());
-
-		Iterator<Loan> it = loans.iterator();
-		while (it.hasNext()) {
-		Loan l = it.next();
-		mapLoans.put(l.getKey(), l);
-		}
+		Map<Integer, Loan> mapLoans = new HashMap<Integer, Loan>(loans.size());
+		mapLoans = loans.stream().collect(Collectors.toMap(Loan::getKey, item -> item));
 		System.out.println(mapLoans.size()+" ** Loans Put into map " + watch.stop());
 		
 		Stopwatch watch1 = Stopwatch.createStarted();
 		cache.putAll(mapLoans);
-		
 		System.out.println(mapLoans.size()+" ** Loans Loaded in Cache " + watch1.stop());
 		return watch;
 	}
