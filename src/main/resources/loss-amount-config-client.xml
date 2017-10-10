@@ -69,7 +69,7 @@
 			    	<!-- Creating a cache configuration. -->
       <bean class="org.apache.ignite.configuration.CacheConfiguration">
       	<property name="name" value="loanCache"/>
-		<property name="cacheMode" value="LOCAL"/>
+		<property name="cacheMode" value="PARTITIONED"/>
 		<property name="atomicityMode" value="ATOMIC"/>
 		<!-- Set number of backups to 0-->
         <property name="backups" value="0"/>
