@@ -2,9 +2,11 @@ package com.primatics.ignite.service;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.cache.processor.EntryProcessorResult;
 
@@ -64,15 +66,17 @@ public class LoanIgnite implements Serializable {
 		
 		final Map<Integer, Loan> mapLoans = new HashMap<Integer, Loan>(loans.size());
 
-		for (final Loan loan : loans) {
-			mapLoans.put(loan.getKey(), loan);
+		Iterator<Loan> it = loans.iterator();
+		while (it.hasNext()) {
+		Loan l = it.next();
+		mapLoans.put(l.getKey(), l);
 		}
-
+		System.out.println(mapLoans.size()+" ** Loans Put into map " + watch.stop());
+		
+		Stopwatch watch1 = Stopwatch.createStarted();
 		cache.putAll(mapLoans);
 		
-		watch = watch.stop();
-
-		System.out.println(mapLoans.size()+" ** Loans Loaded in Cache " + watch);
+		System.out.println(mapLoans.size()+" ** Loans Loaded in Cache " + watch1.stop());
 		return watch;
 	}
 }
