@@ -56,8 +56,6 @@
 							<list>
 								<!-- In distributed environment, replace with actual host IP address. -->
 								<value>127.0.0.1</value>
-								<value>172.31.12.181</value>
-								<value>172.31.0.214</value>
 							</list>
 						</property>
 					</bean>
@@ -69,7 +67,7 @@
 			    	<!-- Creating a cache configuration. -->
       <bean class="org.apache.ignite.configuration.CacheConfiguration">
       	<property name="name" value="loanCache"/>
-		<property name="cacheMode" value="PARTITIONED"/>
+		<property name="cacheMode" value="LOCAL"/>
 		<property name="atomicityMode" value="ATOMIC"/>
 		<!-- Set number of backups to 0-->
         <property name="backups" value="0"/>
