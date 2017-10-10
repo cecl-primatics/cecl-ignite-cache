@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
+
 import javax.cache.processor.EntryProcessorResult;
 
 import org.apache.ignite.Ignite;
@@ -30,7 +30,6 @@ public class LoanIgnite implements Serializable {
 	 */
 	private static final long serialVersionUID = -5398226097451383976L;
 	static Ignite ignite = null;
-	private static Set<Integer> keys = new TreeSet<Integer>();
 	
 	@Autowired
 	private LoanRepository loanRepository;
@@ -46,7 +45,7 @@ public class LoanIgnite implements Serializable {
 		Stopwatch watch = Stopwatch.createStarted();
 
 		System.out.println("----cache---------" + cache.size(CachePeekMode.PRIMARY));
-
+		Set<Integer> keys = loanRepository.getKeys();
 		// fastest
 		final Map<Integer, EntryProcessorResult<Loan>> results = cache.<Loan>invokeAll(keys, new LossAmountsEntryProcessor());
 		watch = watch.stop();
@@ -56,9 +55,6 @@ public class LoanIgnite implements Serializable {
 	}
 
 	public Stopwatch initializeLoans() {
-		if (keys.size() > 0) {
-			keys.clear();
-		}
 		
 		final IgniteCache<Integer, Loan> cache = ignite.cache("loanCache");
 		cache.clear();
@@ -68,11 +64,8 @@ public class LoanIgnite implements Serializable {
 		
 		final Map<Integer, Loan> mapLoans = new HashMap<Integer, Loan>(loans.size());
 
-		int count = 0;
 		for (final Loan loan : loans) {
-			mapLoans.put(count, loan);
-			keys.add(new Integer(count));
-			count++;
+			mapLoans.put(loan.getKey(), loan);
 		}
 
 		cache.putAll(mapLoans);
