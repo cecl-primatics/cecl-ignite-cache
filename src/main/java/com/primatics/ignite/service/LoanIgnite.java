@@ -1,12 +1,16 @@
 package com.primatics.ignite.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.cache.processor.EntryProcessorResult;
 
@@ -15,9 +19,13 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.CachePeekMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.util.CloseableIterator;
 import org.springframework.stereotype.Component;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 import com.primatics.ignite.dto.Loan;
 import com.primatics.ignite.repository.LoanRepository;
 
@@ -36,6 +44,9 @@ public class LoanIgnite implements Serializable {
 	@Autowired
 	private LoanRepository loanRepository;
 
+	@Autowired
+	private MongoTemplate mongoTemplate;
+	
 	public void start() {
 		ignite = Ignition.start("classpath:loss-amount-config-client.xml");
 	}
@@ -62,14 +73,22 @@ public class LoanIgnite implements Serializable {
 		cache.clear();
 		
 		Stopwatch watch = Stopwatch.createStarted();
-		final List<Loan> loans = loanRepository.findAll();
-		Map<Integer, Loan> mapLoans = new HashMap<Integer, Loan>(loans.size());
-		mapLoans = loans.stream().collect(Collectors.toMap(Loan::getKey, item -> item));
-		System.out.println(mapLoans.size()+" ** Loans Put into map " + watch.stop());
+		CloseableIterator<Loan> loansIt = mongoTemplate.stream(new Query(), Loan.class);
+		System.out.println(" ** Loans from mongoDB into map " + watch.stop());
+		
+		Stopwatch watch3 = Stopwatch.createStarted();
+		List<Loan> list = StreamUtils.asStream(loansIt).collect(Collectors.toList());;
+		System.out.println(list.size()+" ** Iterables to List " + watch3.stop());
+		
+		Stopwatch watch2 = Stopwatch.createStarted();
+		Map<Integer, Loan> mapLoans = new HashMap<Integer, Loan>();
+		mapLoans = list.stream().collect(Collectors.toMap(Loan::getKey, item -> item));
+		System.out.println(mapLoans.size()+" ** List into map " + watch2.stop());
 		
 		Stopwatch watch1 = Stopwatch.createStarted();
 		cache.putAll(mapLoans);
-		System.out.println(mapLoans.size()+" ** Loans Loaded in Cache " + watch1.stop());
-		return watch;
+		watch1 = watch1.stop();
+		System.out.println(mapLoans.size()+" ** Loans Loaded in Cache " + watch1);
+		return watch1;
 	}
 }
