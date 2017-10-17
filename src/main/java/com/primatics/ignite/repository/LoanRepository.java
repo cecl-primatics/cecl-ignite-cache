@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 import com.primatics.ignite.dto.Loan;
 
 @Component
-public interface LoanRepository extends MongoRepository<Loan, String>, LoanRepositoryCustom, Serializable {
+public interface LoanRepository extends MongoRepository<Loan, String>, Serializable {
 	
 }

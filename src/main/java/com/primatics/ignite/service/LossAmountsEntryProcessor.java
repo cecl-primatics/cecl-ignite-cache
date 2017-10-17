@@ -13,25 +13,45 @@ public class LossAmountsEntryProcessor implements CacheEntryProcessor<Integer, L
 	 * 
 	 */
 	private static final long serialVersionUID = 233486996462458966L;
+	private Double[] survivalScalingFactor;
+	private Double[] lossRateScalingFactor;
+
+	public LossAmountsEntryProcessor(final Double[] survivalScalingFactor, final Double[] lossRateScalingFactor) {
+		this.survivalScalingFactor = survivalScalingFactor;
+		this.lossRateScalingFactor = lossRateScalingFactor;
+	}
 
 	@Override
 	public Loan process(final MutableEntry<Integer, Loan> entry, final Object... arguments) throws EntryProcessorException {
 		final Loan loan = entry.getValue();
-		final Double balanceAmount = loan.getBalance();
+		final Double balanceAmount = loan.getBalance();	
 		final Double[] survivalRates = loan.getSurvival();
 		final Double[] lossRates = loan.getLossRate();
 		final Double[] lossAmounts = loan.getLossAmount() == null ? new Double[16] : loan.getLossAmount();
 
-		for (int i = 1; i <= 16; i++) {
-			final Double survivalRate = survivalRates[i - 1];
-			final Double lossRate = lossRates[i - 1];
-			final Double resultAmount = balanceAmount * survivalRate * lossRate;
-			lossAmounts[i - 1] = resultAmount;
+		if (loan == null || balanceAmount == null || survivalRates == null || lossRates == null) {
+			throw new EntryProcessorException(loan.getLoanId() + ": Null Values.");
+		}
+		
+		final int survivalRatesSize = survivalRates.length;
+		
+		if (lossRates.length != survivalRatesSize) {
+			throw new EntryProcessorException(loan.getLoanId() + ": Rates not of correct length");
+		}
+		
+		if (survivalScalingFactor.length < survivalRatesSize || lossRateScalingFactor.length < lossRates.length) {
+			throw new EntryProcessorException(loan.getLoanId() + ": Scaling factors not of correct length");
+		}
+		
+		for (int i = 0; i < survivalRatesSize; i++) {
+			final Double survivalRate = survivalRates[i];
+			final Double lossRate = lossRates[i];
+			final Double resultAmount = balanceAmount * survivalRate * survivalScalingFactor[i] * lossRate * lossRateScalingFactor[i];
+			lossAmounts[i] = resultAmount;
 		}
 		
 		loan.setLossAmount(lossAmounts);
 		
 		return loan;
 	}
-
 }
