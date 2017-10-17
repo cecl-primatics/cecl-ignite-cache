@@ -18,14 +18,12 @@ import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteState;
 import org.apache.ignite.Ignition;
 import org.apache.ignite.cache.CacheEntry;
-import org.apache.ignite.cache.CachePeekMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.util.CloseableIterator;
 import org.springframework.stereotype.Component;
 
-import com.google.common.base.Stopwatch;
 import com.primatics.ignite.dto.AnalyzedLoan;
 import com.primatics.ignite.dto.Loan;
 
@@ -64,18 +62,11 @@ public class LoanIgnite implements Serializable {
 	public AnalyzedLoan loadDataIntoCache(final Double[] survivalScalingFactor, final Double[] lossRateScalingFactor,
 			Integer analysisKey) {
 
-		System.out.println("Loan Ignite");
 		final IgniteCache<Integer, Loan> cache = ignite.cache("loanCache");
 		cache.clear();
-		System.out.println("----cache---------" + cache.size(CachePeekMode.PRIMARY));
 
-		Stopwatch watch1 = Stopwatch.createStarted();
 		List<Integer> keys = mongoTemplate.getDb().getCollection("loans").distinct("_id");
-		System.out.println(" ** Get KEYS from Mongo " + watch1.stop());
-
-		Stopwatch watch2 = Stopwatch.createStarted();
 		Set<Integer> set = new HashSet<Integer>(keys);
-		System.out.println(" ** Convert KEYS LIST to SEt " + watch2.stop());
 
 		Loan l = new Loan();
 		totalBalance = 0.0;
@@ -118,8 +109,6 @@ public class LoanIgnite implements Serializable {
 
 		final IgniteCache<Integer, Loan> cache = ignite.cache("loanCache");
 
-		Stopwatch watch = Stopwatch.createStarted();
-
 		AnalyzedLoan al = new AnalyzedLoan();
 		al.setKey(key);
 		al.setPortfolio("all");
@@ -135,17 +124,8 @@ public class LoanIgnite implements Serializable {
 						BigDecimal.ROUND_HALF_UP);
 			}
 		}
-		watch = watch.stop();
-
-		System.out.println("computation and update took: " + watch + " ----------- " + cache.size(CachePeekMode.PRIMARY)
-				+ " ------ ");
 
 		al.setTotalLossAmounts(sumArrayLossAmounts);
-
-		for (int i = 0; i < al.getTotalLossAmounts().length; i++) {
-			System.out
-					.println("*******LOSS AMOUNT ELEMENTS***********" + Arrays.asList(al.getTotalLossAmounts()).get(i));
-		}
 
 		final IgniteCache<Integer, AnalyzedLoan> cacheAnalysis = ignite.getOrCreateCache("loanCacheAnalysis");
 		cacheAnalysis.replace(al.getKey(), al);
@@ -153,32 +133,19 @@ public class LoanIgnite implements Serializable {
 		return al;
 	}
 
-	public Stopwatch initializeLoans() {
+	public void initializeLoans() {
 
 		final IgniteCache<Integer, Loan> cache = ignite.cache("loanCache");
 		cache.clear();
 
-		Stopwatch watch = Stopwatch.createStarted();
 		CloseableIterator<Loan> loansIt = mongoTemplate.stream(new Query(), Loan.class);
-		System.out.println(" ** Loans from mongoDB into map " + watch.stop());
 
-		Stopwatch watch3 = Stopwatch.createStarted();
 		List<Loan> list = StreamUtils.asStream(loansIt).collect(Collectors.toList());
-		;
-		System.out.println(list.size() + " ** Iterables to List " + watch3.stop());
 
-		Stopwatch watch2 = Stopwatch.createStarted();
 		Map<Integer, Loan> mapLoans = new HashMap<Integer, Loan>();
 		mapLoans = list.stream().collect(Collectors.toMap(Loan::getKey, item -> item));
-		System.out.println(mapLoans.size() + " ** List into map " + watch2.stop());
 
-		Stopwatch watch1 = Stopwatch.createStarted();
 		cache.putAll(mapLoans);
-		watch1 = watch1.stop();
-		System.out.println(
-				mapLoans.size() + " --CACHE SIZE-- " + cache.size(null) + " ** Loans Loaded in Cache " + watch1);
-
-		return watch1;
 	}
 
 	public AnalyzedLoan getAnalyzedLoan(Integer key) {
@@ -210,7 +177,6 @@ public class LoanIgnite implements Serializable {
 		} else {
 			CacheEntry<Integer, AnalyzedLoan> l = cache.getEntry(999);
 			ignite.close();
-			System.out.println("ANSWER ----------- " + l.getValue().toString());
 			return l.getValue();
 		}
 

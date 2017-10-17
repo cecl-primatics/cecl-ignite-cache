@@ -3,10 +3,6 @@ package com.primatics.ignite.dto;
 import java.io.Serializable;
 import java.util.Arrays;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 public class Rates implements Serializable {
 	
 	/**
