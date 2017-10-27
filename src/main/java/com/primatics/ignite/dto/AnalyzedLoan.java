@@ -6,7 +6,7 @@ import java.util.Arrays;
 public class AnalyzedLoan {
 	
 	private Integer key;
-	private String portfolio;
+	private String scenario;
 	private BigDecimal totalBalance;
 	private BigDecimal[] totalLossAmounts;
 	private Double[] survival;
@@ -15,10 +15,10 @@ public class AnalyzedLoan {
 	
 	public AnalyzedLoan() {}
 	
-	public AnalyzedLoan(Integer key, String portfolio, BigDecimal totalBalance, BigDecimal[] totalLossAmounts, BigDecimal totalLoss) {
+	public AnalyzedLoan(Integer key, String scenario, BigDecimal totalBalance, BigDecimal[] totalLossAmounts, BigDecimal totalLoss) {
 		super();
 		this.key = key;
-		this.portfolio = portfolio;
+		this.scenario = scenario;
 		this.totalBalance = totalBalance;
 		this.totalLossAmounts = totalLossAmounts;
 		this.totalLoss = totalLoss;
@@ -30,11 +30,11 @@ public class AnalyzedLoan {
 	public void setKey(Integer key) {
 		this.key = key;
 	}
-	public String getPortfolio() {
-		return portfolio;
+	public String getScenario() {
+		return scenario;
 	}
-	public void setPortfolio(String portfolio) {
-		this.portfolio = portfolio;
+	public void setScenario(String scenario) {
+		this.scenario = scenario;
 	}
 	public BigDecimal getTotalBalance() {
 		return totalBalance;
@@ -51,7 +51,7 @@ public class AnalyzedLoan {
 
 	@Override
 	public String toString() {
-		return "AnalyzedLoan [key=" + key + ", portfolio=" + portfolio + ", totalBalance=" + totalBalance
+		return "AnalyzedLoan [key=" + key + ", scenario=" + scenario + ", totalBalance=" + totalBalance
 				+ ", totalLossAmounts=" + Arrays.toString(totalLossAmounts) + ", totalLoss=" + totalLoss +"]";
 	}
 

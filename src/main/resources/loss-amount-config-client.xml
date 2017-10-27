@@ -12,12 +12,22 @@
 	language governing permissions and limitations under the License. -->
 
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="
-       http://www.springframework.org/schema/beans
-       http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/util
+        http://www.springframework.org/schema/util/spring-util.xsd">
 	<!-- Alter configuration below as needed. -->
 	<bean class="org.apache.ignite.configuration.IgniteConfiguration">
+	<property name="includeEventTypes">
+        <list>
+            <util:constant static-field="org.apache.ignite.events.EventType.EVT_TASK_STARTED"/>
+            <util:constant static-field="org.apache.ignite.events.EventType.EVT_TASK_FINISHED"/>
+            <util:constant static-field="org.apache.ignite.events.EventType.EVT_TASK_FAILED"/>
+        </list>
+    </property>
 		<!-- Enabling the peer-class loading feature. -->
 		<property name="peerClassLoadingEnabled" value="true" />
 		<property name="clientMode" value="true"/>
@@ -39,7 +49,7 @@
                         <bean class="org.apache.ignite.configuration.MemoryPolicyConfiguration">
                             <property name="name" value="Default_Region"/>
                             <!-- 1000 MB memory region with disabled eviction -->
-                            <property name="initialSize" value="#{512L * 1024 * 1024}"/>
+                            <property name="initialSize" value="#{1L * 1024 * 1024 * 1024}"/>
 							<property name="maxSize" value="#{16L * 1024 * 1024 * 1024}"/>
                         </bean>
                     </list>
@@ -56,7 +66,7 @@
 							<list>
 								<!-- In distributed environment, replace with actual host IP address. -->
 								<value>127.0.0.1</value>
-								<value>172.31.12.70</value>
+								<!-- <value>18.220.215.95</value> -->
 							</list>
 						</property>
 					</bean>

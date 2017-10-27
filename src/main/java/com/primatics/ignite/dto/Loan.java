@@ -1,9 +1,9 @@
 package com.primatics.ignite.dto;
 
+import java.io.Serializable;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.io.Serializable;
 
 /**
  * Created by Rama Arun on 02/10/2017.
@@ -15,8 +15,8 @@ public class Loan implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -4175385848044131093L;
-	@Id
 	private Integer key;
+	private String scenario;
 	private String loanId;
 	private Double balance;
 	private Double[] survival;
@@ -32,6 +32,14 @@ public class Loan implements Serializable {
 
 	public void setKey(Integer key) {
 		this.key = key;
+	}
+	
+	public String getScenario() {
+		return scenario;
+	}
+
+	public void setScenario(String scenario) {
+		this.scenario = scenario;
 	}
 
 	public String getLoanId() {
@@ -76,12 +84,13 @@ public class Loan implements Serializable {
 
 	@Override
 	public String toString() {
-		return "Loan [key=" + key + ", loanId=" + loanId + ", balance=" + balance + ", survival=" + survival + ", lossRate=" + lossRate + ", lossAmount=" + lossAmount
+		return "Loan [scenario=" + scenario + ", key=" + key + ", loanId=" + loanId + ", balance=" + balance + ", survival=" + survival + ", lossRate=" + lossRate + ", lossAmount=" + lossAmount
 				+ "]";
 	}
 
-	public Loan(Integer key, String loanId, Double balance, Double[] survival, Double[] lossRate, Double[] lossAmount) {
+	public Loan(Integer key, String scenario, String loanId, Double balance, Double[] survival, Double[] lossRate, Double[] lossAmount) {
 		super();
+		this.scenario = scenario;
 		this.key = key;
 		this.loanId = loanId;
 		this.balance = balance;
