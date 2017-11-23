@@ -7,15 +7,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import javax.cache.processor.EntryProcessorResult;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.CharacterPredicates;
+import org.apache.commons.text.RandomStringGenerator;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteCache;
 import org.apache.ignite.IgniteState;
 import org.apache.ignite.Ignition;
+import org.apache.ignite.cache.CachePeekMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -73,12 +81,8 @@ public class LoanIgnite implements Serializable {
 	
 	/** Step 2: From file to Cache */
 	public AnalyzedLoan initializeLoans(final Double[] survivalScalingFactor, final Double[] lossRateScalingFactor,
-			Integer analysisKey, String run_name) {
+			String run_name) {
 		
-		start();
-		IgniteCache<Integer, Loan> cache = ignite.cache("loanCache");
-		cache.clear();
-
 		 Query query = new Query();
 		 query.addCriteria(Criteria.where("scenario").is(run_name));
 		 query.with(new Sort(Sort.Direction.ASC,"loanId"));
@@ -86,14 +90,18 @@ public class LoanIgnite implements Serializable {
 		
 		List<Loan> list = StreamUtils.asStream(loansIt).collect(Collectors.toList());
 		
-		Map<Integer, Loan> mapLoans = new HashMap<Integer, Loan>();
+		Map<String, Loan> mapLoans = new HashMap<String, Loan>();
 		mapLoans = list.stream().collect(Collectors.toMap(Loan::getKey, item -> item));
+		
+		start();
+		IgniteCache<String, Loan> cache = ignite.cache("loanCache");
+		cache.removeAll(mapLoans.keySet());
 		
 		cache.putAll(mapLoans);
 		
 		Loan l = new Loan();
 		
-		final Map<Integer, EntryProcessorResult<Loan>> results = cache.<Loan>invokeAll(mapLoans.keySet(), (entry, args) -> {
+		final Map<String, EntryProcessorResult<Loan>> results = cache.<Loan>invokeAll(mapLoans.keySet(), (entry, args) -> {
 			Loan loan = entry.getValue();
 			Double balanceAmount = loan.getBalance();
 			totalBalance = balanceAmount + totalBalance;
@@ -125,24 +133,28 @@ public class LoanIgnite implements Serializable {
 		});
 		
 		DecimalFormat df2 = new DecimalFormat(".##");
-		AnalyzedLoan loan = getDataForCalc(survivalScalingFactor, lossRateScalingFactor, analysisKey, mapLoans.keySet(), run_name, Double.valueOf(df2.format(totalBalance)));
+		AnalyzedLoan loan = getDataForCalc(survivalScalingFactor, lossRateScalingFactor, mapLoans.keySet(), run_name, Double.valueOf(df2.format(totalBalance)));
 		return loan;
 	}
 	
 	/** Step 2 - File to Cache */
  	 public AnalyzedLoan getDataForCalc(final Double[] survivalScalingFactor, final Double[] lossRateScalingFactor,
-			Integer key, Set<Integer> set, String run_name, Double totalBalance) {
+ 			Set<String> set, String run_name, Double totalBalance) {
  		start();
-		IgniteCache<Integer, Loan> cache = ignite.cache("loanCache");
+		IgniteCache<String, Loan> cache = ignite.cache("loanCache");
 		BigDecimal[] sumArrayLossAmounts = new BigDecimal[16];
 		AnalyzedLoan al = new AnalyzedLoan();
-		al.setKey(key);
+		Query query = new Query(Criteria.where("scenario").is(run_name));
+		if (mongoTemplate.exists(query, AnalyzedLoan.class)) {
+			al.setKey(mongoTemplate.findOne(query, AnalyzedLoan.class).getKey());
+		} else {
+		al.setKey(generateUniqueId());
+		}
 		al.setScenario(run_name);
 		al.setTotalBalance(new BigDecimal(totalBalance));
 		al.setLossRate(lossRateScalingFactor);
 		al.setSurvival(survivalScalingFactor);
 
-		Stopwatch watch5 = Stopwatch.createStarted();
 		Arrays.fill(sumArrayLossAmounts, new BigDecimal(0.0));
 		for (Loan loanCached : cache.getAll(set).values()) {
 			final Double[] loanLossAmounts = loanCached.getLossAmount();
@@ -151,62 +163,53 @@ public class LoanIgnite implements Serializable {
 						BigDecimal.ROUND_HALF_UP);
 			}
 		}
-		long heapSize3 = Runtime.getRuntime().totalMemory();
-		System.out.println("STEP 17 - Summing lossAmounts tooks :::: "+watch5.stop()+ " - "+heapSize3);
 		al.setTotalLossAmounts(sumArrayLossAmounts);
 
-		Stopwatch watch6 = Stopwatch.createStarted();
 		BigDecimal totalLoss = new BigDecimal(0.0);
 		for (int i = 0; i < 16; i++) {
 			totalLoss = totalLoss.add(sumArrayLossAmounts[i]).setScale(2, BigDecimal.ROUND_HALF_UP);
 		}
 		
 		al.setTotalLoss(totalLoss);
-		long heapSize = Runtime.getRuntime().totalMemory();
-		System.out.println("STEP 18 - Summing all totalLossAmounts tooks :::: "+watch6.stop()+ " - "+heapSize);
 		
-		final IgniteCache<Integer, AnalyzedLoan> cacheAnalysis = ignite.cache("loanAnalysisCache");
+		final IgniteCache<String, AnalyzedLoan> cacheAnalysis = ignite.getOrCreateCache("loanAnalysisCache");
 		cacheAnalysis.put(al.getKey(), al);
+		
+		mongoTemplate.save(al);
+		
 		return al;
 	}
  	 
- 	 public AnalyzedLoan getAnalyzedLoanFromCache(Integer key) {
+ 	public AnalyzedLoan getAnalyzedLoanFromCache(String scenario) {
  		 
+ 		Query query = new Query();
+ 		query.addCriteria(Criteria.where("scenario").is(scenario));
+ 		String key = (String) mongoTemplate.findOne(query, AnalyzedLoan.class).getKey();
+ 		
  		startAnalysis();
-		final IgniteCache<Integer, AnalyzedLoan> cacheAnalysis = ignite.cache("loanAnalysisCache");
+		final IgniteCache<String, AnalyzedLoan> cacheAnalysis = ignite.cache("loanAnalysisCache");
 		AnalyzedLoan l = cacheAnalysis.get(key);
-		
-		System.out.println("*******put into Cache ==== ANALYZED LOAN************");
-		System.out.println(l.toString());
-		System.out.println("*******END ANALYZED LOAN************");
 		
 		return l;
  	 }
 
  	public AnalyzedLoan recalculate(Integer index, final Double[] survivalScalingFactor,
-			final Double[] lossRateScalingFactor, Integer analysisKey, String scenario) {
+			final Double[] lossRateScalingFactor, String scenario) {
  		
  		start();
-		final IgniteCache<Integer, Loan> cacheCalc = ignite.cache("loanCache");
+		final IgniteCache<String, Loan> cacheCalc = ignite.cache("loanCache");
 		BigDecimal[] sumArrayLossAmounts = new BigDecimal[16];
-		Criteria criteria = new Criteria();
- 		criteria.where("scenario").is(scenario);
- 		Query query = new Query();
- 		query.addCriteria(criteria);
- 		List<Integer> keys = mongoTemplate.getCollection("loans")
- 		    .distinct("key",query.getQueryObject());
- 		Set<Integer> keyset = new HashSet<Integer>(keys);
-
-		AnalyzedLoan current = getAnalyzedLoanFromCache(analysisKey);
+ 		
+		AnalyzedLoan current = getAnalyzedLoanFromCache(scenario);
 		Double balanceAmount = current.getTotalBalance().doubleValue();
 		
-		Map<Integer, Double[]> losses = new HashMap<Integer, Double[]>();
+		Map<String, Double[]> losses = new HashMap<String, Double[]>();
 		
-		Map<Integer, Loan> loansFromCache = cacheCalc.getAll(keyset);
-		System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& "+loansFromCache.size());
-		
+		List<String> list = findByField("_id");
+ 		Set<String> keyset = new HashSet<String>(list);
+ 		
 		AnalyzedLoan newAnalysis = new AnalyzedLoan();
-		final Map<Integer, EntryProcessorResult<Loan>> results = cacheCalc.<Loan>invokeAll(keyset, (entry, args) -> {
+		final Map<String, EntryProcessorResult<Loan>> results = cacheCalc.<Loan>invokeAll(keyset, (entry, args) -> {
 			Loan loan = entry.getValue();
 			Double[] survivalRates = loan.getSurvival();
 			Double[] lossRates = loan.getLossRate();
@@ -230,14 +233,14 @@ public class LoanIgnite implements Serializable {
 
 		});
 		// Integer key = 999;
-		newAnalysis.setKey(analysisKey);
+		newAnalysis.setKey(current.getKey());
 		newAnalysis.setScenario(scenario);
 		newAnalysis.setTotalBalance(new BigDecimal(totalBalance));
 		newAnalysis.setLossRate(lossRateScalingFactor);
 		newAnalysis.setSurvival(survivalScalingFactor);
 		
 		Arrays.fill(sumArrayLossAmounts, new BigDecimal(0.0));
-		for (Integer k : losses.keySet()) {
+		for (String k : losses.keySet()) {
 			final Double[] loanLossAmounts = losses.get(k);
 			for (int i = 0; i < 16; i++) {
 				sumArrayLossAmounts[i] = sumArrayLossAmounts[i].add(new BigDecimal(loanLossAmounts[i])).setScale(2,
@@ -253,8 +256,27 @@ public class LoanIgnite implements Serializable {
 		}
 		newAnalysis.setTotalLoss(sum);
 
-		final IgniteCache<Integer, AnalyzedLoan> cacheAnalysis = ignite.getOrCreateCache("loanAnalysisCache");
+		final IgniteCache<String, AnalyzedLoan> cacheAnalysis = ignite.getOrCreateCache("loanAnalysisCache");
 		cacheAnalysis.replace(newAnalysis.getKey(), newAnalysis);
+		
+		Query query1 = new Query();
+ 		query1.addCriteria(Criteria.where("scenario").is(scenario));
+ 		mongoTemplate.remove(query1, AnalyzedLoan.class);
+		mongoTemplate.save(newAnalysis);
+		
 		return newAnalysis;
 	}
+ 	
+ 	public static String generateUniqueId() {      
+ 		RandomStringGenerator randomStringGenerator =
+ 		        new RandomStringGenerator.Builder()
+ 		                .withinRange('0', 'z')
+ 		                .filteredBy(CharacterPredicates.LETTERS, CharacterPredicates.DIGITS)
+ 		                .build();
+ 		return randomStringGenerator.generate(12);
+    }
+ 	
+ 	public List<String> findByField(String field) {
+ 		  return (List<String>) mongoTemplate.getCollection("loans").distinct(field);
+ 		 }
 }

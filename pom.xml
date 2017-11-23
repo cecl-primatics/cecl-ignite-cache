@@ -9,7 +9,7 @@
 	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<ignite.version>2.2.0</ignite.version>
+		<ignite.version>2.3.0</ignite.version>
 	</properties>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -17,8 +17,24 @@
 		<version>1.5.7.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
+
+	<distributionManagement>
+		<repository>
+			<id>primaticsfinancial2017</id>
+			<name>cecl-ignite-service</name>
+			<uniqueVersion>false</uniqueVersion>
+			<layout>legacy</layout>
+			<url>https://index.docker.io/v1/</url>
+		</repository>
+	</distributionManagement>
+
 	<dependencies>
-			<dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-text</artifactId>
+			<version>1.1</version>
+		</dependency>
+		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
 		</dependency>
@@ -84,6 +100,16 @@
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-xml</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.ignite</groupId>
+			<artifactId>ignite-kubernetes</artifactId>
+			<version>2.3.0</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>cecl-ignite-service</finalName>
@@ -102,4 +128,60 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>build-docker</id>
+			<build>
+				<plugins>
+
+					<plugin>
+						<groupId>io.fabric8</groupId>
+						<artifactId>docker-maven-plugin</artifactId>
+						<version>0.18.1</version>
+						<configuration>
+							<images>
+								<image>
+									<name>primaticsfinancial2017/cecl-ignite-service</name>
+									<alias>${docker.container.name}</alias>
+									<!-- Configure build settings -->
+									<build>
+										<dockerFileDir>${project.basedir}\src\docker</dockerFileDir>
+										<assembly>
+											<inline>
+												<fileSets>
+													<fileSet>
+														<directory>${project.basedir}\target</directory>
+														<outputDirectory>.</outputDirectory>
+														<includes>
+															<include>*.jar</include>
+														</includes>
+													</fileSet>
+												</fileSets>
+											</inline>
+										</assembly>
+									</build>
+								</image>
+							</images>
+						</configuration>
+						<executions>
+							<execution>
+								<id>docker:build</id>
+								<phase>package</phase>
+								<goals>
+									<goal>build</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>docker:push</id>
+								<phase>install</phase>
+								<goals>
+									<goal>push</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

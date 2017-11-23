@@ -1,7 +1,6 @@
 package com.primatics.ignite.controller;
 
 import java.util.Arrays;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +42,7 @@ public class IgniteController {
 		Double[] lossRates = new Double[16];
 		Arrays.fill(lossRates, 1.0);
     	
-		AnalyzedLoan al = loanIgnite.initializeLoans(survivals, lossRates, 999, run_name);
+		AnalyzedLoan al = loanIgnite.initializeLoans(survivals, lossRates, run_name);
     	watch3 = watch3.stop();
     	
     	long heapSize1 = Runtime.getRuntime().totalMemory();
@@ -52,9 +51,9 @@ public class IgniteController {
         return ResponseEntity.ok().body(al);
     }
     
-    @GetMapping("/analyzedloan/{key}")
-    public ResponseEntity<AnalyzedLoan> analyzedloan(@PathVariable("key") Integer key) throws Exception {
-    	AnalyzedLoan al = loanIgnite.getAnalyzedLoanFromCache(key);
+    @GetMapping("/analyzedloan/{scenario}")
+    public ResponseEntity<AnalyzedLoan> analyzedloan(@PathVariable("scenario") String scenario) throws Exception {
+    	AnalyzedLoan al = loanIgnite.getAnalyzedLoanFromCache(scenario);
     	return ResponseEntity.ok().body(al);
     }
     
@@ -77,7 +76,7 @@ public class IgniteController {
     		lossList[i] = loss.getDouble(i);
     	}
 
-       	AnalyzedLoan l = loanIgnite.recalculate(index, surList, lossList, 999, run_name);
+       	AnalyzedLoan l = loanIgnite.recalculate(index, surList, lossList, run_name);
        	
 		System.out.println("*******getAnalyzedLoan from Cache ==== ANALYZED LOAN************");
 		System.out.println(l.toString());
