@@ -47,16 +47,10 @@
 
 		<property name="discoverySpi">
     <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
-      <property name="ipFinder">
-        <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder">
-          <property name="addresses">
-            <list>
-              <value>10.0.4.207</value>
-            </list>
-          </property>
-        </bean>
-      </property>
-    </bean>
+        		<property name="ipFinder">
+            		<bean
+class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+            		</bean>
   </property>
 		<property name="cacheConfiguration">
 			<list>
