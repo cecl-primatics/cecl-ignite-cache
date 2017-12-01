@@ -13,5 +13,5 @@ RUN alternatives --install /usr/bin/javac javac /usr/java/latest/bin/javac 20000
 ENV JAVA_OPTS -XX:+UseG1GC -XX:+UseTLAB -XX:NewSize=512m -XX:MaxNewSize=512m -XX:MaxTenuringThreshold=0 -XX:SurvivorRatio=1024 -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=60 -Xss16m
 EXPOSE 8082
 VOLUME ["/data"]
-#ADD /maven/cecl-ignite-service.jar cecl-ignite-service.jar
+ADD /maven/cecl-ignite-service.jar cecl-ignite-service.jar
 ENTRYPOINT ["java", "-Dspring.data.mongodb.uri=mongodb://cecl:cecl@mongodb-32-centos7/loans", "-jar","/cecl-ignite-service.jar"]
