@@ -133,52 +133,21 @@
 			<id>build-docker</id>
 			<build>
 				<plugins>
-
 					<plugin>
-						<groupId>io.fabric8</groupId>
+						<groupId>com.spotify</groupId>
 						<artifactId>docker-maven-plugin</artifactId>
-						<version>0.18.1</version>
+						<version>0.2.3</version>
 						<configuration>
-							<images>
-								<image>
-									<name>primaticsfinancial2017/cecl-ignite-service</name>
-									<alias>${docker.container.name}</alias>
-									<!-- Configure build settings -->
-									<build>
-										<dockerFileDir>${project.basedir}\src\docker</dockerFileDir>
-										<assembly>
-											<inline>
-												<fileSets>
-													<fileSet>
-														<directory>${project.basedir}\target</directory>
-														<outputDirectory>.</outputDirectory>
-														<includes>
-															<include>*.jar</include>
-														</includes>
-													</fileSet>
-												</fileSets>
-											</inline>
-										</assembly>
-									</build>
-								</image>
-							</images>
+							<imageName>primaticsfinancial2017/cecl-ignite-cache</imageName>
+							<dockerDirectory>/</dockerDirectory>
+							<resources>
+								<resource>
+									<targetPath>/</targetPath>
+									<directory>${project.build.directory}</directory>
+									<include>${project.build.finalName}.jar</include>
+								</resource>
+							</resources>
 						</configuration>
-						<executions>
-							<execution>
-								<id>docker:build</id>
-								<phase>package</phase>
-								<goals>
-									<goal>build</goal>
-								</goals>
-							</execution>
-							<execution>
-								<id>docker:push</id>
-								<phase>install</phase>
-								<goals>
-									<goal>push</goal>
-								</goals>
-							</execution>
-						</executions>
 					</plugin>
 				</plugins>
 			</build>
